@@ -6,8 +6,28 @@
     <title>目前座位狀態</title>
     <style>
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f7; margin: 0; padding: 20px; text-align: center; }
-        .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 16px; padding: 30px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow-x: auto; }
-        h1 { color: #333; font-size: 24px; margin-bottom: 5px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 16px; padding: 30px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow-x: auto; position: relative; }
+        h1 { color: #333; font-size: 24px; margin-bottom: 5px; margin-top: 60px; }
+        
+        /* 裝飾圖片樣式 */
+        .deco-img {
+            position: absolute;
+            top: 20px;
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 3px solid #fff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+        .img-left { left: 20px; }
+        .img-right { right: 20px; }
+
+        @media (max-width: 600px) {
+            .deco-img { width: 80px; height: 80px; top: 10px; }
+            h1 { margin-top: 80px; }
+        }
         .status-badge { display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 18px; margin-bottom: 20px; }
         .available-status { background-color: #e8f5e9; color: #2e7d32; }
         .full-status { background-color: #ffebee; color: #c62828; }
@@ -55,6 +75,8 @@
 </head>
 <body>
     <div class="container">
+        <img src="images/cat-left.jpg" class="deco-img img-left" alt="店貓左">
+        <img src="images/cat-right.jpg" class="deco-img img-right" alt="店貓右">
         <h1>店內即時座位</h1>
         <div id="main-status" class="status-badge available-status">尚有空位 (3 席)</div>
         
