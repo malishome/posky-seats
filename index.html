@@ -7,16 +7,16 @@
     <style>
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f7; margin: 0; padding: 20px; text-align: center; }
         .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 16px; padding: 30px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow-x: auto; position: relative; }
-        h1 { color: #333; font-size: 24px; margin-bottom: 5px; margin-top: 60px; }
+        h1 { color: #333; font-size: 24px; margin-bottom: 5px; margin-top: 250px; }
         
-        /* 裝飾圖片樣式 */
+        /* 裝飾圖片樣式 - 4:5 比例 */
         .deco-img {
             position: absolute;
             top: 20px;
-            width: 120px;
-            height: 120px;
+            width: 180px; /* 寬度放大 */
+            height: 225px; /* 高度維持 4:5 */
             object-fit: cover;
-            border-radius: 50%;
+            border-radius: 12px; /* 稍微圓角但不裁切 */
             border: 3px solid #fff;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             z-index: 10;
@@ -25,8 +25,8 @@
         .img-right { right: 20px; }
 
         @media (max-width: 600px) {
-            .deco-img { width: 80px; height: 80px; top: 10px; }
-            h1 { margin-top: 80px; }
+            .deco-img { width: 120px; height: 150px; top: 10px; }
+            h1 { margin-top: 170px; }
         }
         .status-badge { display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 18px; margin-bottom: 20px; }
         .available-status { background-color: #e8f5e9; color: #2e7d32; }
