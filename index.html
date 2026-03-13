@@ -210,8 +210,11 @@
                     const noteSpan = document.createElement('span');
                     noteSpan.className = 'table-note';
                     
-                    if (table.name === '大方桌' || table.name === '大藤桌') {
-                        noteSpan.innerText = '客滿需併桌';
+                    if (table.name === '大方桌') {
+                        noteSpan.innerText = '5人桌(未滿三人需併桌)';
+                        div.appendChild(noteSpan);
+                    } else if (table.name === '大藤桌') {
+                        noteSpan.innerText = '7人桌(未滿三人需併桌)';
                         div.appendChild(noteSpan);
                     } else if (table.name === '馬栗圓桌') {
                         noteSpan.innerText = '四人桌';
