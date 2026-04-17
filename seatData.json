@@ -1,8 +1,8 @@
 {
-  "lastUpdated": "5:43:58 PM",
+  "lastUpdated": "5:44:29 PM",
   "totalTables": 8,
-  "availableTables": 5,
-  "occupiedTables": 4,
+  "availableTables": 6,
+  "occupiedTables": 3,
   "details": [
     {
       "name": "大方桌",
@@ -30,7 +30,7 @@
     },
     {
       "name": "石桌",
-      "status": "occupied",
+      "status": "available",
       "row": 2,
       "col": 5
     },
