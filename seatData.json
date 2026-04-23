@@ -1,8 +1,8 @@
 {
-  "lastUpdated": "4:33:42 PM",
+  "lastUpdated": "4:34:41 PM",
   "totalTables": 8,
-  "availableTables": 4,
-  "occupiedTables": 4,
+  "availableTables": 5,
+  "occupiedTables": 3,
   "details": [
     {
       "name": "大方桌",
@@ -18,7 +18,7 @@
     },
     {
       "name": "小圓",
-      "status": "occupied",
+      "status": "available",
       "row": 2,
       "col": 2
     },
@@ -37,7 +37,7 @@
     {
       "name": "大藤桌",
       "searchName": "大籐桌",
-      "status": "available",
+      "status": "half-occupied",
       "row": 3,
       "col": 1
     },
