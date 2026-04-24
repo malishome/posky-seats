@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "12:52:40 PM",
+  "lastUpdated": "12:53:40 PM",
   "totalTables": 8,
   "availableTables": 5,
   "occupiedTables": 3,
@@ -24,13 +24,13 @@
     },
     {
       "name": "矮窗",
-      "status": "occupied",
+      "status": "available",
       "row": 2,
       "col": 4
     },
     {
       "name": "石桌",
-      "status": "available",
+      "status": "occupied",
       "row": 2,
       "col": 5
     },
