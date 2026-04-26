@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "12:43:39 PM",
+  "lastUpdated": "12:44:41 PM",
   "totalTables": 8,
   "availableTables": 5,
   "occupiedTables": 3,
@@ -30,7 +30,7 @@
     },
     {
       "name": "石桌",
-      "status": "occupied",
+      "status": "available",
       "row": 2,
       "col": 5
     },
@@ -43,7 +43,7 @@
     },
     {
       "name": "吧一",
-      "status": "available",
+      "status": "occupied",
       "row": 3,
       "col": 4
     },
