@@ -1,8 +1,8 @@
 {
-  "lastUpdated": "1:51:41 PM",
+  "lastUpdated": "1:52:41 PM",
   "totalTables": 8,
-  "availableTables": 1,
-  "occupiedTables": 7,
+  "availableTables": 2,
+  "occupiedTables": 6,
   "details": [
     {
       "name": "大方桌",
@@ -24,7 +24,7 @@
     },
     {
       "name": "矮窗",
-      "status": "occupied",
+      "status": "available",
       "row": 2,
       "col": 4
     },
