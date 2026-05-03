@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "1:13:10 PM",
+  "lastUpdated": "1:14:10 PM",
   "totalTables": 8,
   "availableTables": 4,
   "occupiedTables": 4,
@@ -18,7 +18,7 @@
     },
     {
       "name": "小圓",
-      "status": "available",
+      "status": "occupied",
       "row": 2,
       "col": 2
     },
@@ -49,7 +49,7 @@
     },
     {
       "name": "吧二",
-      "status": "occupied",
+      "status": "available",
       "row": 3,
       "col": 5
     }
