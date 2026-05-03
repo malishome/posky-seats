@@ -1,55 +1,56 @@
 {
-  "lastUpdated": "9:59:12 PM",
+  "lastUpdated": "非營業時間",
   "totalTables": 8,
-  "availableTables": 8,
+  "availableTables": 0,
   "occupiedTables": 0,
+  "isOffline": true,
   "details": [
     {
       "name": "大方桌",
-      "status": "available",
+      "status": "offline",
       "row": 1,
       "col": 3
     },
     {
       "name": "馬栗圓桌",
-      "status": "available",
+      "status": "offline",
       "row": 2,
       "col": 1
     },
     {
       "name": "小圓",
-      "status": "available",
+      "status": "offline",
       "row": 2,
       "col": 2
     },
     {
       "name": "矮窗",
-      "status": "available",
+      "status": "offline",
       "row": 2,
       "col": 4
     },
     {
       "name": "石桌",
-      "status": "available",
+      "status": "offline",
       "row": 2,
       "col": 5
     },
     {
       "name": "大藤桌",
       "searchName": "大籐桌",
-      "status": "available",
+      "status": "offline",
       "row": 3,
       "col": 1
     },
     {
       "name": "吧一",
-      "status": "available",
+      "status": "offline",
       "row": 3,
       "col": 4
     },
     {
       "name": "吧二",
-      "status": "available",
+      "status": "offline",
       "row": 3,
       "col": 5
     }
