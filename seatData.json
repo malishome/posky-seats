@@ -1,12 +1,12 @@
 {
-  "lastUpdated": "7:12:40 PM",
+  "lastUpdated": "7:13:40 PM",
   "totalTables": 8,
   "availableTables": 6,
   "occupiedTables": 2,
   "details": [
     {
       "name": "大方桌",
-      "status": "available",
+      "status": "half-occupied",
       "row": 1,
       "col": 3
     },
