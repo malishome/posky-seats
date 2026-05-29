@@ -1,12 +1,12 @@
 {
-  "lastUpdated": "6:54:10 PM",
+  "lastUpdated": "6:55:11 PM",
   "totalTables": 8,
-  "availableTables": 5,
-  "occupiedTables": 3,
+  "availableTables": 3,
+  "occupiedTables": 5,
   "details": [
     {
       "name": "大方桌",
-      "status": "half-occupied",
+      "status": "available",
       "row": 1,
       "col": 3
     },
@@ -18,7 +18,7 @@
     },
     {
       "name": "小圓",
-      "status": "available",
+      "status": "occupied",
       "row": 2,
       "col": 2
     },
@@ -43,7 +43,7 @@
     },
     {
       "name": "吧一",
-      "status": "available",
+      "status": "occupied",
       "row": 3,
       "col": 4
     },
