@@ -1,8 +1,8 @@
 {
-  "lastUpdated": "11:51:41 AM",
+  "lastUpdated": "11:52:41 AM",
   "totalTables": 8,
-  "availableTables": 8,
-  "occupiedTables": 0,
+  "availableTables": 6,
+  "occupiedTables": 2,
   "details": [
     {
       "name": "大方桌",
@@ -30,14 +30,14 @@
     },
     {
       "name": "石桌",
-      "status": "available",
+      "status": "occupied",
       "row": 2,
       "col": 5
     },
     {
       "name": "大藤桌",
       "searchName": "大籐桌",
-      "status": "available",
+      "status": "occupied",
       "row": 3,
       "col": 1
     },
