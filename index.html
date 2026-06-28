@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>malishome seat v4.4</title>
+    <title>malishome seat v4.5</title>
     <style>
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f7; margin: 0; padding: 10px; text-align: center; }
         .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 16px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); position: relative; }
@@ -15,29 +15,30 @@
         .available-status { background-color: #e8f5e9; color: #2e7d32; }
         .full-status { background-color: #ffebee; color: #c62828; }
         
-        .legend { display: flex; justify-content: center; gap: 15px; margin: 10px 0; font-size: 13px; color: #666; font-weight: bold; }
+        .legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin: 10px 0; font-size: 13px; color: #666; font-weight: bold; }
         .legend-item { display: flex; align-items: center; gap: 6px; }
         .dot { width: 14px; height: 14px; border-radius: 3px; display: inline-block; border: 1px solid rgba(0,0,0,0.1); }
         .dot.available { background-color: #9e9e9e; }
         .dot.occupied { background-color: #4caf50; }
+        .dot.half-occupied { background: linear-gradient(90deg, #9e9e9e 50%, #4caf50 50%); }
 
         .grid-outer { width: 100%; overflow-x: auto; background: #fafafa; border-radius: 12px; border: 1px solid #eee; margin-top: 5px; }
         .table-grid { display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 80px); gap: 10px; padding: 15px; min-width: 500px; }
         .table { padding: 5px; border-radius: 8px; font-weight: bold; font-size: 14px; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .available { background-color: #9e9e9e; }
         .occupied { background-color: #4caf50; }
+        .half-occupied { background: linear-gradient(90deg, #9e9e9e 50%, #4caf50 50%); }
         
         .refresh-btn { margin-top: 20px; padding: 15px 24px; border: none; background: #007bff; color: white; border-radius: 12px; cursor: pointer; font-size: 18px; font-weight: bold; width: 100%; max-width: 350px; box-shadow: 0 4px 0 #0056b3; }
         .refresh-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #0056b3; }
         .refresh-btn:disabled { background: #99caff; box-shadow: 0 4px 0 #66b0ff; cursor: wait; }
         .ver { position: absolute; top: 5px; right: 10px; font-size: 10px; color: #ff0000; font-weight: bold; opacity: 0.5; }
         .footer-text { font-size: 11px; color: #aaa; margin-top: 10px; }
-        #api-status { color: #2e7d32; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="ver">v4.4 - UI 完整復原版</div>
+        <div class="ver">v4.5 - UI 完整修復 (含併桌圖示)</div>
         <div class="header-section">
             <img src="images/cat-left.jpg" class="deco-img" alt="店貓左">
             <div class="title-wrapper">
@@ -47,10 +48,10 @@
             <img src="images/cat-right.jpg" class="deco-img" alt="店貓右">
         </div>
 
-        <!-- 狀態圖示說明 (Legend) -->
         <div class="legend">
             <div class="legend-item"><span class="dot available"></span> 灰色：空位</div>
             <div class="legend-item"><span class="dot occupied"></span> 綠色：使用中</div>
+            <div class="legend-item"><span class="dot half-occupied"></span> 併桌：可併桌 (僅大方桌/大藤桌)</div>
         </div>
 
         <div class="grid-outer">
@@ -75,7 +76,6 @@
             const tablesDiv = document.getElementById('tables');
             tablesDiv.innerHTML = '';
             
-            // 排序：確保按照 Row/Col 渲染（如果有的話）
             const sortedDetails = [...data.details].sort((a, b) => {
                 if (a.row !== b.row) return a.row - b.row;
                 return a.col - b.col;
@@ -101,7 +101,7 @@
                 apiEndpoint = config.url + '/api/refresh';
                 document.getElementById('api-status').innerText = '✅ 主機通道已對準 (' + config.updatedAt.split(' ')[1] + ')';
             } catch (e) {
-                document.getElementById('api-status').innerText = '⚠️ 通道受阻，正在自動修正...';
+                document.getElementById('api-status').innerText = '⚠️ 通道重新建立中...';
             }
         }
 
@@ -116,15 +116,12 @@
         async function manualRefresh() {
             const btn = document.querySelector('.refresh-btn');
             btn.disabled = true;
-            btn.innerText = '🚀 物理瞬時同步中...';
-            
+            btn.innerText = '🚀 瞬時同步中...';
             await syncConfig();
-            
             if (apiEndpoint) {
                 try {
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 18000); 
-
+                    const timeoutId = setTimeout(() => controller.abort(), 20000); 
                     const res = await fetch(apiEndpoint, { 
                         headers: { 'Bypass-Tunnel-Reminder': 'true' },
                         cache: 'no-store',
@@ -132,7 +129,6 @@
                     });
                     const result = await res.json();
                     clearTimeout(timeoutId);
-
                     if (result.ok && result.data) {
                         updateUI(result.data);
                         btn.innerText = '✅ 同步成功！';
@@ -141,10 +137,9 @@
                     }
                 } catch (e) {
                     console.error("API Error:", e);
-                    btn.innerText = '⏳ 主機忙碌中，請稍候...';
+                    btn.innerText = '⏳ 處理中，請稍候...';
                 }
             }
-
             setTimeout(() => {
                 btn.disabled = false;
                 btn.innerText = '即時同步座位 (秒級更新)';
@@ -153,7 +148,7 @@
         }
 
         syncConfig().then(fetchSeats);
-        setInterval(fetchSeats, 30000);
+        setInterval(fetchSeats, 25000);
         setInterval(syncConfig, 60000);
     </script>
 </body>
