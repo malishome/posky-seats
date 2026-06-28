@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>malishome seat v1.9</title>
+    <title>malishome seat v2.0</title>
     <style>
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f7; margin: 0; padding: 10px; text-align: center; }
         #error-display { display: none; color: red; background: #fff0f0; padding: 10px; margin: 10px; border-radius: 8px; font-weight: bold; }
@@ -62,8 +62,8 @@
         <button class="refresh-btn" onclick="manualRefresh()">即時同步座位</button>
     </div>
     <script>
-        const REPO_API = 'https://api.github.com/repos/malishome/posky-seats/commits/main';
-        const RAW_BASE = 'https://raw.githubusercontent.com/malishome/posky-seats';
+        // 🚀 v2.0 直接從 Raw 獲取，避免 GitHub API Rate Limit
+        const DATA_URL = 'https://raw.githubusercontent.com/malishome/posky-seats/main/seatData.json';
         const TRIGGER_URL = 'https://malishome-posky.loca.lt/api/refresh';
 
         async function fetchSeats() {
@@ -71,15 +71,15 @@
             const tablesDiv = document.getElementById('tables');
             const errorDiv = document.getElementById('error-display');
             try {
-                const commitRes = await fetch(REPO_API + '?t=' + Date.now());
-                const commitData = await commitRes.json();
-                const sha = commitData.sha;
-                const res = await fetch(`${RAW_BASE}/${sha}/seatData.json`);
+                // 使用時間戳繞過快取
+                const res = await fetch(DATA_URL + '?t=' + Date.now());
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
+                
                 errorDiv.style.display = 'none';
                 mainStatus.innerText = data.availableTables > 0 ? `尚有空位 (${data.availableTables} 桌)` : '目前客滿，請稍候';
                 mainStatus.className = data.availableTables > 0 ? 'status-badge available-status' : 'status-badge full-status';
+                
                 tablesDiv.innerHTML = '';
                 data.details.forEach(table => {
                     const div = document.createElement('div');
@@ -95,13 +95,16 @@
                 errorDiv.innerText = `同步中... (${error.message})`;
             }
         }
+
         async function manualRefresh() {
             const btn = document.querySelector('.refresh-btn');
             btn.disabled = true;
             btn.innerText = '📡 正在喚醒主機並同步...';
             try {
-                await fetch(TRIGGER_URL, { mode: 'no-cors', headers: { 'Bypass-Tunnel-Reminder': 'true' } });
-                let count = 3;
+                // 異步觸發，不等待回應
+                fetch(TRIGGER_URL, { mode: 'no-cors', headers: { 'Bypass-Tunnel-Reminder': 'true' } });
+                
+                let count = 4;
                 const timer = setInterval(async () => {
                     btn.innerText = `⏳ 等待同步中 (${count}s)...`;
                     count--;
