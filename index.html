@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>店內即時座位狀態 v5.7</title>
+    <title>店內即時座位狀態 v6.3</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f2f2f7; margin: 0; padding: 10px; text-align: center; }
         .container { max-width: 850px; margin: 0 auto; background: white; border-radius: 20px; padding: 20px 15px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); position: relative; }
@@ -34,7 +34,10 @@
         .footer { margin-top: 15px; font-size: 11px; color: #8e8e93; line-height: 1.5; }
         .live-dot { width: 8px; height: 8px; background-color: #ff3b30; border-radius: 50%; display: inline-block; animation: blink 1.5s infinite; }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.2; } 100% { opacity: 1; } }
-        #sync-status { font-weight: bold; color: #007aff; }
+        #sync-status { font-weight: bold; }
+        .source-tag { font-size: 9px; padding: 2px 6px; border-radius: 10px; margin-left: 5px; vertical-align: middle; }
+        .tag-direct { background: #e3f2fd; color: #007aff; }
+        .tag-cloud { background: #fff3e0; color: #ff9500; }
     </style>
 </head>
 <body>
@@ -42,7 +45,7 @@
         <div class="header">
             <img src="https://github.com/malishome/posky-seats/raw/main/images/cat-left.jpg" class="deco-img">
             <div class="title-area">
-                <h1><span class="live-dot"></span> 店內即時座位</h1>
+                <h1><span class="live-dot"></span> 店內即時座位 <span id="ver" style="font-size: 10px; opacity: 0.3;">v6.3</span></h1>
                 <div id="main-status" class="status-badge available-status">連線中...</div>
             </div>
             <img src="https://github.com/malishome/posky-seats/raw/main/images/cat-right.jpg" class="deco-img">
@@ -61,7 +64,8 @@
         <div class="footer">
             <div id="update-time">最後同步：載入中...</div>
             <div id="sync-status">📡 正在建立數據連結...</div>
-            <div style="margin-top: 5px; opacity: 0.6;">(每 15 秒自動刷新，請放心使用)</div>
+            <div style="margin-top: 5px; opacity: 0.6;">(每 15 秒自動刷新，若無跳動請重新整理)</div>
+            <button onclick="location.reload(true)" style="margin-top:10px; padding: 5px 15px; border-radius: 10px; border: 1px solid #ddd; background: white; font-size: 12px; color: #666;">強制手動刷新</button>
         </div>
     </div>
 
@@ -70,7 +74,7 @@
         const GITHUB_DATA_URL = 'https://raw.githubusercontent.com/malishome/posky-seats/main/seatData.json';
         let apiBase = '';
 
-        function render(data) {
+        function render(data, source) {
             try {
                 if (!data || !data.details) return;
                 const statusBadge = document.getElementById('main-status');
@@ -93,7 +97,9 @@
                     }
                     grid.appendChild(div);
                 });
-                document.getElementById('update-time').innerText = `最後同步：${data.lastUpdated || '未知'}`;
+                
+                const sourceTag = source === 'direct' ? '<span class="source-tag tag-direct">直連</span>' : '<span class="source-tag tag-cloud">雲端</span>';
+                document.getElementById('update-time').innerHTML = `最後同步：${data.lastUpdated || '未知'} ${sourceTag}`;
             } catch (e) {
                 console.error("Render error:", e);
             }
@@ -102,22 +108,24 @@
         async function refresh() {
             const cacheBuster = `?t=${Date.now()}`;
             
+            // 1. 取得 Tunnel URL
             try {
                 const res = await fetch(CONFIG_URL + cacheBuster, { cache: 'no-store' });
                 const config = await res.json();
                 apiBase = config.url;
-                document.getElementById('sync-status').innerText = '✅ 主機數據直連中';
+                document.getElementById('sync-status').innerText = '✅ 連結穩定';
                 document.getElementById('sync-status').style.color = '#007aff';
             } catch (e) {
-                document.getElementById('sync-status').innerText = '⚠️ 正在使用雲端備份模式';
+                document.getElementById('sync-status').innerText = '⚠️ 雲端備份模式';
                 document.getElementById('sync-status').style.color = '#ff9500';
             }
             
             let success = false;
+            // 2. 優先嘗試直連 API
             if (apiBase) {
                 try {
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 5000);
+                    const timeoutId = setTimeout(() => controller.abort(), 4000);
                     
                     const res = await fetch(`${apiBase}/api/seats${cacheBuster}`, { 
                         headers: { 'Bypass-Tunnel-Reminder': 'true' },
@@ -126,19 +134,24 @@
                     });
                     const data = await res.json();
                     if (data && data.details) {
-                        render(data);
+                        render(data, 'direct');
                         success = true;
                     }
                     clearTimeout(timeoutId);
-                } catch (e) {}
+                } catch (e) {
+                    console.log("Direct API failed.");
+                }
             }
 
+            // 3. 備份：從 GitHub 抓 JSON
             if (!success) {
                 try {
                     const res = await fetch(GITHUB_DATA_URL + cacheBuster, { cache: 'no-store' });
                     const data = await res.json();
-                    render(data);
-                } catch (err) {}
+                    render(data, 'cloud');
+                } catch (err) {
+                    document.getElementById('update-time').innerText = '❌ 連線中斷';
+                }
             }
         }
 
