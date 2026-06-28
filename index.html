@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>店內即時座位狀態 v6.5</title>
+    <title>店內即時座位狀態 v6.6</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f2f2f7; margin: 0; padding: 10px; text-align: center; }
         .container { max-width: 850px; margin: 0 auto; background: white; border-radius: 20px; padding: 20px 15px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); position: relative; }
@@ -45,7 +45,7 @@
         <div class="header">
             <img src="https://github.com/malishome/posky-seats/raw/main/images/cat-left.jpg" class="deco-img">
             <div class="title-area">
-                <h1><span class="live-dot"></span> 店內即時座位 <span id="ver" style="font-size: 10px; opacity: 0.3;">v6.5</span></h1>
+                <h1><span class="live-dot"></span> 店內即時座位 <span id="ver" style="font-size: 10px; opacity: 0.3;">v6.6</span></h1>
                 <div id="main-status" class="status-badge available-status">連線中...</div>
             </div>
             <img src="https://github.com/malishome/posky-seats/raw/main/images/cat-right.jpg" class="deco-img">
@@ -72,6 +72,7 @@
     <script>
         const REPO_API = 'https://api.github.com/repos/malishome/posky-seats/commits/main';
         const TUNNEL_FILE = 'https://raw.githubusercontent.com/malishome/posky-seats/main/tunnel.json';
+        const SEAT_JSON = 'https://raw.githubusercontent.com/malishome/posky-seats/main/seatData.json';
         let apiBase = '';
 
         function render(data, source) {
@@ -108,6 +109,7 @@
         async function refresh() {
             const cacheBuster = `?t=${Date.now()}`;
             
+            // 1. 取得 Tunnel URL (破解 GitHub CDN 快取)
             try {
                 const res = await fetch(TUNNEL_FILE + cacheBuster, { cache: 'no-store' });
                 const config = await res.json();
@@ -119,10 +121,11 @@
             }
             
             let success = false;
+            // 2. 優先嘗試直連主機 (0 延遲)
             if (apiBase) {
                 try {
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 3000);
+                    const timeoutId = setTimeout(() => controller.abort(), 4000);
                     const res = await fetch(`${apiBase}/api/seats${cacheBuster}`, { 
                         headers: { 'Bypass-Tunnel-Reminder': 'true' },
                         cache: 'no-store',
@@ -137,23 +140,21 @@
                 } catch (e) {}
             }
 
+            // 3. 備份：暴力刷新 GitHub 數據
             if (!success) {
                 try {
-                    const commitRes = await fetch(REPO_API + cacheBuster, { cache: 'no-store' });
-                    const commitData = await commitRes.json();
-                    const sha = commitData.sha;
-                    const dataUrl = `https://raw.githubusercontent.com/malishome/posky-seats/${sha}/seatData.json`;
-                    const dataRes = await fetch(dataUrl);
-                    const data = await dataRes.json();
+                    // 嘗試從 Raw URL 帶時間戳抓取
+                    const res = await fetch(SEAT_JSON + cacheBuster, { cache: 'no-store' });
+                    const data = await res.json();
                     render(data, 'cloud');
                 } catch (err) {
-                    console.error("Cloud fetch failed.");
+                    document.getElementById('update-time').innerText = '❌ 同步中斷';
                 }
             }
         }
 
         refresh();
-        setInterval(refresh, 15000);
+        setInterval(refresh, 15000); 
     </script>
 </body>
 </html>
