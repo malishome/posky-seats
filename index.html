@@ -210,12 +210,22 @@
         async function manualRefresh() {
             const btn = document.querySelector('.refresh-btn');
             btn.disabled = true;
-            btn.innerText = '正在抓取雲端最新數據...';
-            await fetchSeats();
+            btn.innerText = '📡 正在穿透快取並同步...';
+            
+            // 🚀 連續抓取兩次，確保第一次如果卡住第二次一定能拿到最新的
+            try {
+                await fetchSeats();
+                await new Promise(r => setTimeout(r, 500));
+                await fetchSeats();
+                btn.innerText = '✅ 同步成功！';
+            } catch (e) {
+                btn.innerText = '❌ 同步失敗，請重試';
+            }
+            
             setTimeout(() => {
                 btn.disabled = false;
                 btn.innerText = '即時同步座位';
-            }, 1000);
+            }, 2000);
         }
 
         fetchSeats(); 
