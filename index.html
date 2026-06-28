@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>malishome seat v2.7</title>
+    <title>malishome seat v2.8</title>
     <style>
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f7; margin: 0; padding: 10px; text-align: center; }
-        #error-display { display: none; color: red; background: #fff0f0; padding: 10px; margin: 10px; border-radius: 8px; font-weight: bold; }
+        #error-display { display: none; color: red; background: #fff0f0; padding: 10px; margin: 10px; border-radius: 8px; font-weight: bold; font-size: 12px; }
         .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 16px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .header-section { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; gap: 10px; }
         .title-wrapper { display: flex; flex-direction: column; align-items: center; flex: 1; gap: 5px; min-width: 0; }
@@ -35,6 +35,7 @@
         @media (min-width: 600px) { .table-note { font-size: 10px; } }
         .refresh-btn { margin-top: 20px; padding: 12px 24px; border: none; background: #007bff; color: white; border-radius: 8px; cursor: pointer; font-size: 15px; width: 100%; max-width: 300px;}
         .refresh-btn:disabled { background: #ccc; cursor: not-allowed; }
+        #debug-info { font-size: 10px; color: #ccc; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -60,10 +61,13 @@
             </div>
         </div>
         <button class="refresh-btn" onclick="manualRefresh()">即時同步座位</button>
+        <div id="debug-info">API: 偵測中...</div>
     </div>
     <script>
         const DATA_URL = 'https://raw.githubusercontent.com/malishome/posky-seats/main/seatData.json';
         const TRIGGER_URL = 'https://hungry-duck-22.loca.lt/api/refresh';
+
+        document.getElementById('debug-info').innerText = `API Endpoint: ${TRIGGER_URL}`;
 
         function updateUI(data) {
             if (!data || !data.details) return;
@@ -95,7 +99,7 @@
             } catch (error) {
                 console.error("Fetch Error:", error);
                 document.getElementById('error-display').style.display = 'block';
-                document.getElementById('error-display').innerText = `自動巡邏連線中...`;
+                document.getElementById('error-display').innerText = `巡邏中... (${new Date().toLocaleTimeString()})`;
             }
         }
 
@@ -105,16 +109,16 @@
             btn.innerText = '📡 指令傳送中...';
             
             let finished = false;
-            let count = 10; // 🚀 縮短倒數，因為後端現在超快
+            let count = 8; 
             const timer = setInterval(() => {
                 if (finished) return;
-                btn.innerText = `⏳ 讀取 POSKY 數據 (${count}s)...`;
+                btn.innerText = `⏳ 讀取數據中 (${count}s)...`;
                 if (count > 0) count--;
             }, 1000);
 
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 12000);
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
 
                 const res = await fetch(`${TRIGGER_URL}?t=${Date.now()}`, { 
                     cache: 'no-cache',
@@ -128,23 +132,22 @@
                     finished = true;
                     clearInterval(timer);
                     updateUI(result.data); 
-                    btn.innerText = '✅ 瞬時同步成功！';
-                    setTimeout(() => { btn.disabled = false; btn.innerText = '即時同步座位'; }, 1500);
+                    btn.innerText = '✅ 同步成功！';
+                    setTimeout(() => { btn.disabled = false; btn.innerText = '即時同步座位'; }, 1000);
                 }
             } catch (e) {
-                console.warn("API 逾時，改由背景同步", e);
-                btn.innerText = '⚠️ 指令已下達，等待同步中';
+                console.warn("API 失敗:", e);
+                btn.innerText = '⚠️ 指令已傳送，請稍候';
             }
 
             setTimeout(async () => {
                 if (!finished) {
                     clearInterval(timer);
                     await fetchSeats();
-                    btn.innerText = '✅ 同步完成 (GitHub)';
                     btn.disabled = false;
-                    setTimeout(() => { btn.innerText = '即時同步座位'; }, 1500);
+                    btn.innerText = '即時同步座位';
                 }
-            }, 12000);
+            }, 10000);
         }
 
         fetchSeats(); 
