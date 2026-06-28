@@ -164,17 +164,16 @@
     </div>
 
     <script>
-        const FIREBASE_URL = 'https://poskyseat2-default-rtdb.asia-southeast1.firebasedatabase.app';
+        const RAW_JSON_URL = 'https://raw.githubusercontent.com/malishome/posky-seats/main/seatData.json';
 
         async function fetchSeats() {
             try {
-                // 檢查是否為營業日 (星期四:4, 五:5, 六:6, 日:0)
+                // 檢查是否為營業日
                 const today = new Date().getDay();
                 const mainStatus = document.getElementById('main-status');
                 const tablesDiv = document.getElementById('tables');
                 
                 if (today === 1 || today === 2 || today === 3) {
-                    // 星期一、二、三為公休日
                     mainStatus.className = 'status-badge full-status';
                     mainStatus.innerText = '目前為公休日 (營業時間: 週四至週日)';
                     tablesDiv.style.display = 'none';
@@ -184,8 +183,8 @@
                     tablesDiv.style.display = 'grid';
                 }
 
-                // 直接從 Firebase 獲取最新即時數據，不等待 GitHub Pages 編譯
-                const res = await fetch(`${FIREBASE_URL}/seatData.json?t=` + new Date().getTime());
+                // 直接從 GitHub Raw 獲取最新即時數據，這比 Pages 快且無快取
+                const res = await fetch(RAW_JSON_URL + '?t=' + new Date().getTime());
                 const data = await res.json();
                 
                 if (data.availableTables > 0) {
@@ -248,51 +247,27 @@
                 }
             } catch (error) {
                 console.error('無法取得資料', error);
-                document.getElementById('last-updated').innerText = '無法連線到數據伺服器';
+                document.getElementById('last-updated').innerText = '正在等待伺服器同步數據...';
             }
         }
         
         async function manualRefresh() {
-            const today = new Date().getDay();
-            if (today === 1 || today === 2 || today === 3) {
-                alert('目前為公休日，無法同步座位！');
-                return;
-            }
-
             const btn = document.querySelector('.refresh-btn');
             const originalText = btn.innerText;
             btn.disabled = true;
-            btn.innerText = '同步中...';
-            document.getElementById('last-updated').innerText = '正在向雲端發送即時同步請求...';
-
-            try {
-                // 透過 Firebase 傳遞同步指令給後台
-                await fetch(`${FIREBASE_URL}/refreshRequested.json`, {
-                    method: 'PUT',
-                    body: 'true'
-                });
-                
-                let countdown = 8; // 增加到 8 秒，因為要經過 Firebase 轉手
-                const interval = setInterval(() => {
-                    document.getElementById('last-updated').innerText = `已送出請求，${countdown}秒後載入雲端數據...`;
-                    countdown--;
-                    if (countdown < 0) {
-                        clearInterval(interval);
-                        fetchSeats();
-                        btn.disabled = false;
-                        btn.innerText = originalText;
-                    }
-                }, 1000);
-            } catch (e) {
-                console.error('發送同步請求失敗', e);
-                fetchSeats();
+            btn.innerText = '整理中...';
+            
+            // 重新整理視圖
+            await fetchSeats();
+            
+            setTimeout(() => {
                 btn.disabled = false;
                 btn.innerText = originalText;
-            }
+            }, 1000);
         }
 
         fetchSeats(); 
-        setInterval(fetchSeats, 10000); 
+        setInterval(fetchSeats, 10000); // 10 秒自動刷新視圖
     </script>
 </body>
 </html>
