@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>店內即時座位狀態</title>
+    <title>店內即時座位狀態 v5.2</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f2f2f7; margin: 0; padding: 10px; text-align: center; }
         .container { max-width: 850px; margin: 0 auto; background: white; border-radius: 20px; padding: 20px 15px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); position: relative; }
@@ -15,7 +15,6 @@
         .available-status { background-color: #e8f5e9; color: #2e7d32; }
         .full-status { background-color: #ffebee; color: #c62828; }
         
-        /* 狀態說明圖例 (完全復原) */
         .legend { display: flex; justify-content: center; gap: 12px; margin: 15px 0; font-size: 13px; color: #555; font-weight: 600; flex-wrap: wrap; }
         .legend-item { display: flex; align-items: center; gap: 6px; }
         .box { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.1); }
@@ -23,7 +22,6 @@
         .box.occupied { background-color: #4caf50; }
         .box.half { background: linear-gradient(90deg, #9e9e9e 50%, #4caf50 50%); }
 
-        /* 座位網格 (100% 物理排版) */
         .grid-container { width: 100%; overflow-x: auto; background: #fafafa; border-radius: 15px; padding: 15px; border: 1px solid #eee; margin-top: 10px; }
         .table-grid { display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 85px); gap: 12px; min-width: 580px; }
         .table-item { border-radius: 8px; color: white; font-weight: bold; font-size: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: transform 0.2s; cursor: default; }
@@ -33,7 +31,7 @@
         .occupied { background-color: #4caf50; }
         .half-occupied { background: linear-gradient(90deg, #9e9e9e 50%, #4caf50 50%); }
 
-        .footer { margin-top: 15px; font-size: 11px; color: #8e8e93; }
+        .footer { margin-top: 15px; font-size: 11px; color: #8e8e93; line-height: 1.5; }
         .live-dot { width: 8px; height: 8px; background-color: #ff3b30; border-radius: 50%; display: inline-block; animation: blink 1.5s infinite; }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.2; } 100% { opacity: 1; } }
         #sync-status { font-weight: bold; color: #007aff; }
@@ -45,7 +43,7 @@
             <img src="images/cat-left.jpg" class="deco-img">
             <div class="title-area">
                 <h1><span class="live-dot"></span> 店內即時座位</h1>
-                <div id="main-status" class="status-badge available-status">讀取中...</div>
+                <div id="main-status" class="status-badge available-status">連線中...</div>
             </div>
             <img src="images/cat-right.jpg" class="deco-img">
         </div>
@@ -62,7 +60,8 @@
 
         <div class="footer">
             <div id="update-time">最後同步：載入中...</div>
-            <div id="sync-status">📡 正在連接全自動守護進程...</div>
+            <div id="sync-status">📡 正在建立主機數據連結...</div>
+            <div style="margin-top: 5px; opacity: 0.6;">(系統每 15 秒全自動刷新，請放心地給客人看)</div>
         </div>
     </div>
 
@@ -81,7 +80,7 @@
             const grid = document.getElementById('tables');
             grid.innerHTML = '';
             
-            // 物理排序
+            // 按照排版座標排序
             const sorted = data.details.sort((a,b) => (a.row - b.row) || (a.col - b.col));
             
             sorted.forEach(t => {
@@ -94,24 +93,27 @@
                 }
                 grid.appendChild(div);
             });
-            document.getElementById('update-time').innerText = `最後更新：${data.lastUpdated}`;
+            document.getElementById('update-time').innerText = `最後同步：${data.lastUpdated}`;
         }
 
-        async function fetchCurrentApi() {
+        async function fetchConfig() {
             try {
+                // 🚀 極限快取破解，避免讀到舊的 Tunnel URL
                 const res = await fetch(`${CONFIG_URL}?t=${Date.now()}`, { cache: 'no-store' });
                 const config = await res.json();
                 apiBase = config.url;
-                document.getElementById('sync-status').innerText = '✅ 背景同步連線中 (' + config.updatedAt.split(' ')[1] + ')';
+                document.getElementById('sync-status').innerText = '✅ 主機數據連結正常 (' + config.updatedAt.split(' ')[1] + ')';
+                document.getElementById('sync-status').style.color = '#007aff';
             } catch (e) {
-                document.getElementById('sync-status').innerText = '⚠️ 正嘗試穿透 GitHub 快取...';
+                document.getElementById('sync-status').innerText = '⚠️ 正嘗試從雲端備份讀取...';
+                document.getElementById('sync-status').style.color = '#ff9500';
             }
         }
 
         async function refresh() {
-            // 每次刷新前檢查一次最新 API 通道
-            await fetchCurrentApi();
+            await fetchConfig();
             
+            let success = false;
             if (apiBase) {
                 try {
                     const res = await fetch(`${apiBase}/api/seats?t=${Date.now()}`, { 
@@ -121,23 +123,26 @@
                     const data = await res.json();
                     if (data && data.details) {
                         render(data);
-                        return;
+                        success = true;
                     }
                 } catch (e) {
-                    console.error("API Error, falling back...");
+                    console.error("Local API failed, trying GitHub backup.");
                 }
             }
 
-            // Fallback to GitHub Data
-            try {
-                const res = await fetch(`${GITHUB_DATA_URL}?t=${Date.now()}`, { cache: 'no-store' });
-                const data = await res.json();
-                render(data);
-            } catch (err) {}
+            if (!success) {
+                try {
+                    const res = await fetch(`${GITHUB_DATA_URL}?t=${Date.now()}`, { cache: 'no-store' });
+                    const data = await res.json();
+                    render(data);
+                } catch (err) {
+                    console.error("All data sources failed.");
+                }
+            }
         }
 
         refresh();
-        setInterval(refresh, 15000); // 15秒全自動刷新
+        setInterval(refresh, 15000); 
     </script>
 </body>
 </html>
