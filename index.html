@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>malishome seat v2.4</title>
+    <title>malishome seat v2.5</title>
     <style>
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f7; margin: 0; padding: 10px; text-align: center; }
         #error-display { display: none; color: red; background: #fff0f0; padding: 10px; margin: 10px; border-radius: 8px; font-weight: bold; }
@@ -66,7 +66,7 @@
         const TRIGGER_URL = 'https://malishome-posky.loca.lt/api/refresh';
 
         function updateUI(data) {
-            if (!data) return;
+            if (!data || !data.details) return;
             const mainStatus = document.getElementById('main-status');
             const tablesDiv = document.getElementById('tables');
             const lastUpdatedDiv = document.getElementById('last-updated');
@@ -87,12 +87,9 @@
 
         async function fetchSeats() {
             try {
-                // 🚀 v2.4 強化版快取破解：同時使用隨機數與時間戳
-                const cacheBuster = 'r=' + Math.random().toString(36).substring(7) + '&t=' + Date.now();
-                const res = await fetch(`${DATA_URL}?${cacheBuster}`, { 
-                    cache: 'no-store',
-                    headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
-                });
+                // 🚀 v2.5 修正：移除自定義 Headers，避免觸發 GitHub CORS 限制
+                const cacheBuster = 't=' + Date.now() + '&r=' + Math.random().toString(36).substring(7);
+                const res = await fetch(`${DATA_URL}?${cacheBuster}`);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
                 updateUI(data);
@@ -100,7 +97,7 @@
             } catch (error) {
                 console.error("Fetch Error:", error);
                 document.getElementById('error-display').style.display = 'block';
-                document.getElementById('error-display').innerText = `自動更新連線中... (${error.message})`;
+                document.getElementById('error-display').innerText = `連線異常 (${error.message})`;
             }
         }
 
@@ -110,16 +107,19 @@
             btn.innerText = '📡 指令傳送中...';
             
             let finished = false;
-            let count = 20; // 增加倒數，因為背景抓取穩定需要時間
+            let count = 20;
             const timer = setInterval(() => {
                 if (finished) return;
-                btn.innerText = `⏳ 等待主機抓取中 (${count}s)...`;
+                btn.innerText = `⏳ 等待數據回傳 (${count}s)...`;
                 if (count > 0) count--;
             }, 1000);
 
             try {
-                // 🚀 核心優化：直接獲取 API 內的數據
-                const res = await fetch(`${TRIGGER_URL}?t=${Date.now()}`, { cache: 'no-store' });
+                // 🚀 修正：補回 Bypass-Tunnel-Reminder，避免 LocalTunnel 攔截請求
+                const res = await fetch(`${TRIGGER_URL}?t=${Date.now()}`, { 
+                    cache: 'no-store',
+                    headers: { 'Bypass-Tunnel-Reminder': 'true' }
+                });
                 const result = await res.json();
                 
                 if (result.ok && result.data) {
@@ -131,25 +131,22 @@
                 }
             } catch (e) {
                 console.warn("API 回傳失敗:", e);
-                btn.innerText = '⚠️ 主機忙碌，等待 GitHub 更新';
+                btn.innerText = '⚠️ 主機忙碌，改由 GitHub 更新';
             }
 
-            // 備援：不論 API 是否成功，20秒後強抓 GitHub
             setTimeout(async () => {
                 if (!finished) {
                     clearInterval(timer);
                     await fetchSeats();
-                    btn.innerText = '✅ 同步完成 (via GitHub)';
+                    btn.innerText = '✅ 同步完成 (GitHub)';
                     btn.disabled = false;
                     setTimeout(() => { btn.innerText = '即時同步座位'; }, 2000);
                 }
             }, 20000);
         }
 
-        // 初次加載
         fetchSeats(); 
-        // 🚀 縮短自動刷新間隔為 8 秒，對抗 GitHub 延遲
-        setInterval(fetchSeats, 8000); 
+        setInterval(fetchSeats, 10000); 
     </script>
 </body>
 </html>
