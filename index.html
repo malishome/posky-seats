@@ -4,65 +4,62 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <title>malishome seat v3.0</title>
+    <title>malishome seat v3.2</title>
     <style>
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f7; margin: 0; padding: 10px; text-align: center; }
-        #error-display { display: none; color: white; background: #ff4444; padding: 8px; margin: 10px; border-radius: 8px; font-weight: bold; font-size: 13px; }
         .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 16px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); position: relative; }
         .header-section { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; gap: 10px; }
-        .title-wrapper { display: flex; flex-direction: column; align-items: center; flex: 1; gap: 5px; min-width: 0; }
-        h1 { color: #333; font-size: 20px; margin: 0; white-space: nowrap; }
-        .deco-img { width: 100px; height: 125px; object-fit: cover; border-radius: 10px; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.1); flex-shrink: 0; }
-        @media (min-width: 600px) { body { padding: 20px; } .container { padding: 25px; } h1 { font-size: 24px; } .deco-img { width: 160px; height: 200px; } }
-        .status-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; margin: 0; }
+        .title-wrapper { display: flex; flex-direction: column; align-items: center; flex: 1; gap: 5px; }
+        h1 { color: #333; font-size: 20px; margin: 0; }
+        .deco-img { width: 100px; height: 125px; object-fit: cover; border-radius: 10px; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+        .status-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; }
         .available-status { background-color: #e8f5e9; color: #2e7d32; }
         .full-status { background-color: #ffebee; color: #c62828; }
-        .footer-info { display: flex; flex-direction: column; align-items: center; margin-top: 20px; gap: 10px; font-size: 12px; color: #888; }
-        @media (min-width: 600px) { .footer-info { flex-direction: row; justify-content: space-between; padding: 0 10px; } }
         .grid-outer { width: 100%; overflow-x: auto; background: #fafafa; border-radius: 12px; border: 1px solid #eee; margin-top: 15px; }
-        .table-grid { display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 70px); gap: 10px; padding: 15px; min-width: 500px; }
-        @media (min-width: 600px) { .table-grid { grid-template-rows: repeat(3, 80px); min-width: unset; } }
+        .table-grid { display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 75px); gap: 10px; padding: 15px; min-width: 500px; }
         .table { padding: 5px; border-radius: 8px; font-weight: bold; font-size: 14px; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .available { background-color: #9e9e9e; }
         .occupied { background-color: #4caf50; }
         .half-occupied { background: linear-gradient(90deg, #9e9e9e 50%, #4caf50 50%); }
-        .refresh-btn { margin-top: 20px; padding: 15px 24px; border: none; background: #007bff; color: white; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; max-width: 300px; transition: background 0.3s;}
-        .refresh-btn:disabled { background: #99caff; cursor: not-allowed; }
-        .ver { position: absolute; top: 5px; right: 10px; font-size: 9px; color: #ddd; }
-        #sync-status { font-size: 11px; color: #aaa; margin-top: 5px; }
+        .refresh-btn { margin-top: 20px; padding: 15px 24px; border: none; background: #007bff; color: white; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; max-width: 300px; }
+        .refresh-btn:disabled { background: #99caff; }
+        .ver { position: absolute; top: 5px; right: 10px; font-size: 10px; color: #ff0000; font-weight: bold; }
+        .clock { font-size: 11px; color: #aaa; margin-top: 10px; }
     </style>
 </head>
 <body>
-    <div id="error-display">連線中...</div>
     <div class="container">
-        <div class="ver">v3.0 (Dynamic)</div>
+        <div class="ver">v3.2 - 暴力重刷版</div>
         <div class="header-section">
             <img src="images/cat-left.jpg" class="deco-img" alt="店貓左">
             <div class="title-wrapper">
                 <h1>店內即時座位</h1>
-                <div id="main-status" class="status-badge available-status">初始化...</div>
+                <div id="main-status" class="status-badge available-status">連線中...</div>
             </div>
             <img src="images/cat-right.jpg" class="deco-img" alt="店貓右">
         </div>
         <div class="grid-outer">
             <div class="table-grid" id="tables"></div>
         </div>
-        <div class="footer-info">
-            <div id="last-updated">最後更新：-</div>
-            <div id="sync-status">雲端同步中...</div>
-        </div>
+        <div class="clock" id="last-updated">最後更新：(等待首次同步)</div>
+        <div class="clock" id="current-time">網頁時間：--:--:--</div>
         <button class="refresh-btn" onclick="manualRefresh()">即時同步座位</button>
     </div>
     <script>
+        // 🚀 強制清除 Service Worker (避免快取)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) { registration.unregister(); }
+            });
+        }
+
         const CONFIG_URL = 'https://raw.githubusercontent.com/malishome/posky-seats/main/tunnel.json';
         const DATA_URL = 'https://raw.githubusercontent.com/malishome/posky-seats/main/seatData.json';
-        let currentTriggerUrl = '';
+        let apiEndpoint = '';
 
         function updateUI(data) {
             if (!data || !data.details) return;
-            document.getElementById('main-status').innerText = data.availableTables > 0 ? `尚有空位 (${data.availableTables} 桌)` : '目前客滿';
+            document.getElementById('main-status').innerText = data.availableTables > 0 ? `尚有空位` : '目前客滿';
             document.getElementById('main-status').className = 'status-badge ' + (data.availableTables > 0 ? 'available-status' : 'full-status');
             
             const tablesDiv = document.getElementById('tables');
@@ -77,74 +74,59 @@
             document.getElementById('last-updated').innerText = `最後更新：${data.lastUpdated}`;
         }
 
-        async function fetchConfig() {
+        async function syncConfig() {
             try {
-                const res = await fetch(`${CONFIG_URL}?t=${Date.now()}`, { cache: 'no-store' });
+                const res = await fetch(`${CONFIG_URL}?r=${Math.random()}`, { cache: 'no-store' });
                 const config = await res.json();
-                currentTriggerUrl = config.url + '/api/refresh';
-                document.getElementById('sync-status').innerText = '📡 通訊通道已建立';
-            } catch (e) {
-                console.warn("無法取得 API 網址");
-                document.getElementById('sync-status').innerText = '⚠️ 通訊通道受阻 (GitHub 快取)';
-            }
+                apiEndpoint = config.url + '/api/refresh';
+            } catch (e) {}
         }
 
         async function fetchSeats() {
             try {
-                const res = await fetch(`${DATA_URL}?t=${Date.now()}`, { cache: 'no-store' });
+                const res = await fetch(`${DATA_URL}?r=${Math.random()}`, { cache: 'no-store' });
                 const data = await res.json();
                 updateUI(data);
-                document.getElementById('error-display').style.display = 'none';
-            } catch (error) {
-                document.getElementById('error-display').style.display = 'block';
-                document.getElementById('error-display').innerText = '雲端同步延遲中...';
-            }
+            } catch (e) {}
         }
 
         async function manualRefresh() {
             const btn = document.querySelector('.refresh-btn');
             btn.disabled = true;
-            btn.innerText = '📡 指令發射中...';
+            btn.innerText = '正在暴力重刷...';
             
-            // 每次同步前先更新網址
-            await fetchConfig();
-
-            if (!currentTriggerUrl) {
-                btn.innerText = '❌ 找不到通道，請重整網頁';
-                setTimeout(() => { btn.disabled = false; btn.innerText = '即時同步座位'; }, 2000);
-                return;
-            }
-
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 8000);
-
-                const res = await fetch(currentTriggerUrl, { 
-                    cache: 'no-store',
-                    headers: { 'Bypass-Tunnel-Reminder': 'true' },
-                    signal: controller.signal
-                });
-                const result = await res.json();
-                clearTimeout(timeoutId);
-                
-                if (result.ok && result.data) {
-                    updateUI(result.data); 
-                    btn.innerText = '✅ 瞬時同步成功！';
+            await syncConfig();
+            
+            if (apiEndpoint) {
+                try {
+                    const res = await fetch(apiEndpoint, { 
+                        headers: { 'Bypass-Tunnel-Reminder': 'true' },
+                        cache: 'no-store'
+                    });
+                    const result = await res.json();
+                    if (result.ok && result.data) {
+                        updateUI(result.data);
+                        btn.innerText = '✅ 瞬時同步成功！';
+                    }
+                } catch (e) {
+                    btn.innerText = '⚠️ API 逾時，等待雲端';
                 }
-            } catch (e) {
-                btn.innerText = '⏳ 指令已送達，等待雲端生效';
-                console.error(e);
             }
 
             setTimeout(() => {
-                fetchSeats();
                 btn.disabled = false;
                 btn.innerText = '即時同步座位';
-            }, 2000);
+                fetchSeats();
+            }, 3000);
         }
 
-        fetchConfig().then(fetchSeats);
-        setInterval(fetchSeats, 10000);
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('current-time').innerText = `網頁時間：${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+        }, 1000);
+
+        syncConfig().then(fetchSeats);
+        setInterval(fetchSeats, 15000);
     </script>
 </body>
 </html>
