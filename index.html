@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>店內即時座位狀態 v5.2</title>
+    <title>店內即時座位狀態 v5.5</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f2f2f7; margin: 0; padding: 10px; text-align: center; }
         .container { max-width: 850px; margin: 0 auto; background: white; border-radius: 20px; padding: 20px 15px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); position: relative; }
@@ -40,12 +40,12 @@
 <body>
     <div class="container">
         <div class="header">
-            <img src="images/cat-left.jpg" class="deco-img">
+            <img src="https://github.com/malishome/posky-seats/raw/main/images/cat-left.jpg" class="deco-img">
             <div class="title-area">
                 <h1><span class="live-dot"></span> 店內即時座位</h1>
                 <div id="main-status" class="status-badge available-status">連線中...</div>
             </div>
-            <img src="images/cat-right.jpg" class="deco-img">
+            <img src="https://github.com/malishome/posky-seats/raw/main/images/cat-right.jpg" class="deco-img">
         </div>
 
         <div class="legend">
@@ -60,8 +60,8 @@
 
         <div class="footer">
             <div id="update-time">最後同步：載入中...</div>
-            <div id="sync-status">📡 正在建立主機數據連結...</div>
-            <div style="margin-top: 5px; opacity: 0.6;">(系統每 15 秒全自動刷新，請放心地給客人看)</div>
+            <div id="sync-status">📡 正在建立數據連結...</div>
+            <div style="margin-top: 5px; opacity: 0.6;">(每 15 秒自動刷新，若無跳動請重新整理網頁)</div>
         </div>
     </div>
 
@@ -80,7 +80,6 @@
             const grid = document.getElementById('tables');
             grid.innerHTML = '';
             
-            // 按照排版座標排序
             const sorted = data.details.sort((a,b) => (a.row - b.row) || (a.col - b.col));
             
             sorted.forEach(t => {
@@ -96,27 +95,25 @@
             document.getElementById('update-time').innerText = `最後同步：${data.lastUpdated}`;
         }
 
-        async function fetchConfig() {
+        async function refresh() {
+            // 🚀 強力破解快取
+            const cacheBuster = `?t=${Date.now()}`;
+            
             try {
-                // 🚀 極限快取破解，避免讀到舊的 Tunnel URL
-                const res = await fetch(`${CONFIG_URL}?t=${Date.now()}`, { cache: 'no-store' });
+                const res = await fetch(CONFIG_URL + cacheBuster, { cache: 'no-store' });
                 const config = await res.json();
                 apiBase = config.url;
-                document.getElementById('sync-status').innerText = '✅ 主機數據連結正常 (' + config.updatedAt.split(' ')[1] + ')';
+                document.getElementById('sync-status').innerText = '✅ 主機數據直連中';
                 document.getElementById('sync-status').style.color = '#007aff';
             } catch (e) {
-                document.getElementById('sync-status').innerText = '⚠️ 正嘗試從雲端備份讀取...';
+                document.getElementById('sync-status').innerText = '⚠️ 正在使用雲端備份模式';
                 document.getElementById('sync-status').style.color = '#ff9500';
             }
-        }
-
-        async function refresh() {
-            await fetchConfig();
             
             let success = false;
             if (apiBase) {
                 try {
-                    const res = await fetch(`${apiBase}/api/seats?t=${Date.now()}`, { 
+                    const res = await fetch(`${apiBase}/api/seats${cacheBuster}`, { 
                         headers: { 'Bypass-Tunnel-Reminder': 'true' },
                         cache: 'no-store'
                     });
@@ -125,19 +122,15 @@
                         render(data);
                         success = true;
                     }
-                } catch (e) {
-                    console.error("Local API failed, trying GitHub backup.");
-                }
+                } catch (e) {}
             }
 
             if (!success) {
                 try {
-                    const res = await fetch(`${GITHUB_DATA_URL}?t=${Date.now()}`, { cache: 'no-store' });
+                    const res = await fetch(GITHUB_DATA_URL + cacheBuster, { cache: 'no-store' });
                     const data = await res.json();
                     render(data);
-                } catch (err) {
-                    console.error("All data sources failed.");
-                }
+                } catch (err) {}
             }
         }
 
