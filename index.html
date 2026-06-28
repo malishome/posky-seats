@@ -170,91 +170,57 @@
         const RAW_BASE = 'https://raw.githubusercontent.com/malishome/posky-seats';
 
         async function fetchSeats() {
+            const mainStatus = document.getElementById('main-status');
+            const tablesDiv = document.getElementById('tables');
+            const errorDiv = document.getElementById('error-display');
+            
             try {
-                const today = new Date().getDay();
-                const mainStatus = document.getElementById('main-status');
-                const tablesDiv = document.getElementById('tables');
-                const errorDiv = document.getElementById('error-display');
-                
-                if (today === 1 || today === 2 || today === 3) {
-                    mainStatus.className = 'status-badge full-status';
-                    mainStatus.innerText = '目前為公休日 (營業時間: 週四至週日)';
-                    tablesDiv.style.display = 'none';
-                    document.getElementById('last-updated').innerText = '公休期間不更新座位狀態';
-                    return; 
-                } else {
-                    tablesDiv.style.display = 'grid';
-                }
-
-                // 🚀 極速同步策略：先抓最新 Commit SHA 繞過所有快取
+                // 🚀 極速快取穿透：使用 Commit SHA 抓取檔案
                 const commitRes = await fetch(REPO_API + '?t=' + Date.now());
                 const commitData = await commitRes.json();
                 const sha = commitData.sha;
                 
-                // 使用 SHA 直接抓取該版本的檔案，GitHub CDN 絕對不會有舊快取
                 const res = await fetch(`${RAW_BASE}/${sha}/seatData.json`);
-                if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
                 
                 errorDiv.style.display = 'none';
-                if (data.availableTables > 0) {
-                    mainStatus.className = 'status-badge available-status';
-                    mainStatus.innerText = `尚有空位 (${data.availableTables} 桌)`;
-                } else {
-                    mainStatus.className = 'status-badge full-status';
-                    mainStatus.innerText = '目前客滿，請稍候';
-                }
+                mainStatus.innerText = data.availableTables > 0 ? `尚有空位 (${data.availableTables} 桌)` : '目前客滿，請稍候';
+                mainStatus.className = data.availableTables > 0 ? 'status-badge available-status' : 'status-badge full-status';
 
                 tablesDiv.innerHTML = '';
                 data.details.forEach(table => {
                     const div = document.createElement('div');
                     div.className = `table ${table.status}`;
-                    const nameSpan = document.createElement('span');
-                    nameSpan.innerText = table.name;
-                    div.appendChild(nameSpan);
-
-                    const noteSpan = document.createElement('span');
-                    noteSpan.className = 'table-note';
-                    if (table.name === '大方桌') {
-                        noteSpan.innerText = '五人桌(需併桌)';
-                    } else if (table.name === '大藤桌') {
-                        noteSpan.innerText = '七人桌(需併桌)';
-                    } else if (table.name === '馬栗圓圓桌') {
-                        noteSpan.innerText = '四人桌';
-                    } else {
-                        noteSpan.innerText = '雙人桌';
-                    }
-                    div.appendChild(noteSpan);
-                    
-                    if (table.row && table.col) {
+                    div.innerHTML = `<span>${table.name}</span><span class="table-note">${table.name.includes('桌') ? '需併桌' : '雙人桌'}</span>`;
+                    if (table.row) {
                         div.style.gridRow = table.row;
                         div.style.gridColumn = table.col;
                     }
                     tablesDiv.appendChild(div);
                 });
 
-                if (data.lastUpdated) {
-                    document.getElementById('last-updated').innerText = `最後更新：${data.lastUpdated}`;
-                }
+                document.getElementById('last-updated').innerText = `最後更新：${data.lastUpdated}`;
             } catch (error) {
-                console.error('Fetch Error:', error);
-                const errorDiv = document.getElementById('error-display');
                 errorDiv.style.display = 'block';
-                errorDiv.innerText = `連線錯誤: ${error.message} (請嘗試手動重新整理網頁)`;
+                errorDiv.innerText = `同步中... (${error.message})`;
             }
         }
         
         async function manualRefresh() {
             const btn = document.querySelector('.refresh-btn');
-            const originalText = btn.innerText;
             btn.disabled = true;
-            btn.innerText = '正在抓取最新雲端數據...';
+            btn.innerText = '正在抓取雲端最新數據...';
             await fetchSeats();
             setTimeout(() => {
                 btn.disabled = false;
-                btn.innerText = originalText;
-            }, 500);
+                btn.innerText = '即時同步座位';
+            }, 1000);
         }
+
+        fetchSeats(); 
+        setInterval(fetchSeats, 10000); 
+    </script>
 
         fetchSeats(); 
         setInterval(fetchSeats, 20000); // 20 秒自動刷新視圖，對齊後台
