@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>malishome seat</title>
+    <title>malishome seat v1.5</title>
     <style>
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f7; margin: 0; padding: 10px; text-align: center; }
+        #error-display { display: none; color: red; background: #fff0f0; padding: 10px; margin: 10px; border-radius: 8px; font-weight: bold; }
         .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 16px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         
         /* 標題與圖片區塊 */
@@ -135,6 +136,7 @@
     </style>
 </head>
 <body>
+    <div id="error-display"></div>
     <div class="container">
         <div class="header-section">
             <img src="images/cat-left.jpg" class="deco-img" alt="店貓左">
@@ -164,14 +166,12 @@
     </div>
 
     <script>
-        const RAW_JSON_URL = 'https://raw.githubusercontent.com/malishome/posky-seats/main/seatData.json';
-
         async function fetchSeats() {
             try {
-                // 檢查是否為營業日
                 const today = new Date().getDay();
                 const mainStatus = document.getElementById('main-status');
                 const tablesDiv = document.getElementById('tables');
+                const errorDiv = document.getElementById('error-display');
                 
                 if (today === 1 || today === 2 || today === 3) {
                     mainStatus.className = 'status-badge full-status';
@@ -183,10 +183,12 @@
                     tablesDiv.style.display = 'grid';
                 }
 
-                // 直接從 GitHub Raw 獲取最新即時數據，這比 Pages 快且無快取
-                const res = await fetch(RAW_JSON_URL + '?t=' + new Date().getTime());
+                // 嘗試讀取本地 JSON (GitHub Pages 同網域)
+                const res = await fetch('./seatData.json?v=' + Date.now());
+                if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
                 const data = await res.json();
                 
+                errorDiv.style.display = 'none';
                 if (data.availableTables > 0) {
                     mainStatus.className = 'status-badge available-status';
                     mainStatus.innerText = `尚有空位 (${data.availableTables} 桌)`;
@@ -196,49 +198,30 @@
                 }
 
                 tablesDiv.innerHTML = '';
-                
                 data.details.forEach(table => {
                     const div = document.createElement('div');
                     div.className = `table ${table.status}`;
-                    
                     const nameSpan = document.createElement('span');
                     nameSpan.innerText = table.name;
                     div.appendChild(nameSpan);
 
                     const noteSpan = document.createElement('span');
                     noteSpan.className = 'table-note';
-                    
                     if (table.name === '大方桌') {
-                        const typeSpan = document.createElement('span');
-                        typeSpan.className = 'table-note';
-                        typeSpan.innerText = '五人桌';
-                        div.appendChild(typeSpan);
-                        const shareSpan = document.createElement('span');
-                        shareSpan.className = 'table-note';
-                        shareSpan.innerText = '(未滿三位需併桌)';
-                        div.appendChild(shareSpan);
+                        noteSpan.innerText = '五人桌(需併桌)';
                     } else if (table.name === '大藤桌') {
-                        const typeSpan = document.createElement('span');
-                        typeSpan.className = 'table-note';
-                        typeSpan.innerText = '七人桌';
-                        div.appendChild(typeSpan);
-                        const shareSpan = document.createElement('span');
-                        shareSpan.className = 'table-note';
-                        shareSpan.innerText = '(未滿三位需併桌)';
-                        div.appendChild(shareSpan);
-                    } else if (table.name === '馬栗圓桌') {
+                        noteSpan.innerText = '七人桌(需併桌)';
+                    } else if (table.name === '馬栗圓圓桌') {
                         noteSpan.innerText = '四人桌';
-                        div.appendChild(noteSpan);
-                    } else if (['小圓', '矮窗', '石桌', '吧一', '吧二'].includes(table.name)) {
+                    } else {
                         noteSpan.innerText = '雙人桌';
-                        div.appendChild(noteSpan);
                     }
+                    div.appendChild(noteSpan);
                     
                     if (table.row && table.col) {
                         div.style.gridRow = table.row;
                         div.style.gridColumn = table.col;
                     }
-
                     tablesDiv.appendChild(div);
                 });
 
@@ -246,8 +229,10 @@
                     document.getElementById('last-updated').innerText = `最後更新：${data.lastUpdated}`;
                 }
             } catch (error) {
-                console.error('無法取得資料', error);
-                document.getElementById('last-updated').innerText = '正在等待伺服器同步數據...';
+                console.error('Fetch Error:', error);
+                const errorDiv = document.getElementById('error-display');
+                errorDiv.style.display = 'block';
+                errorDiv.innerText = `連線錯誤: ${error.message} (請嘗試手動重新整理網頁)`;
             }
         }
         
@@ -255,11 +240,8 @@
             const btn = document.querySelector('.refresh-btn');
             const originalText = btn.innerText;
             btn.disabled = true;
-            btn.innerText = '整理中...';
-            
-            // 重新整理視圖
+            btn.innerText = '正在刷新...';
             await fetchSeats();
-            
             setTimeout(() => {
                 btn.disabled = false;
                 btn.innerText = originalText;
@@ -267,7 +249,7 @@
         }
 
         fetchSeats(); 
-        setInterval(fetchSeats, 10000); // 10 秒自動刷新視圖
+        setInterval(fetchSeats, 15000); 
     </script>
 </body>
 </html>
