@@ -164,6 +164,8 @@
     </div>
 
     <script>
+        const FIREBASE_URL = 'https://poskyseat2-default-rtdb.asia-southeast1.firebasedatabase.app';
+
         async function fetchSeats() {
             try {
                 // 檢查是否為營業日 (星期四:4, 五:5, 六:6, 日:0)
@@ -177,13 +179,13 @@
                     mainStatus.innerText = '目前為公休日 (營業時間: 週四至週日)';
                     tablesDiv.style.display = 'none';
                     document.getElementById('last-updated').innerText = '公休期間不更新座位狀態';
-                    return; // 終止後續的抓取
+                    return; 
                 } else {
                     tablesDiv.style.display = 'grid';
                 }
 
-                // const res = await fetch('https://poskyseat2-default-rtdb.asia-southeast1.firebasedatabase.app/seatData.json');
-                const res = await fetch('./seatData.json?' + new Date().getTime());
+                // 直接從 Firebase 獲取最新即時數據，不等待 GitHub Pages 編譯
+                const res = await fetch(`${FIREBASE_URL}/seatData.json?t=` + new Date().getTime());
                 const data = await res.json();
                 
                 if (data.availableTables > 0) {
@@ -196,17 +198,14 @@
 
                 tablesDiv.innerHTML = '';
                 
-                // 動態生成桌子
                 data.details.forEach(table => {
                     const div = document.createElement('div');
                     div.className = `table ${table.status}`;
                     
-                    // 標題文字
                     const nameSpan = document.createElement('span');
                     nameSpan.innerText = table.name;
                     div.appendChild(nameSpan);
 
-                    // 桌型備註邏輯
                     const noteSpan = document.createElement('span');
                     noteSpan.className = 'table-note';
                     
@@ -215,7 +214,6 @@
                         typeSpan.className = 'table-note';
                         typeSpan.innerText = '五人桌';
                         div.appendChild(typeSpan);
-
                         const shareSpan = document.createElement('span');
                         shareSpan.className = 'table-note';
                         shareSpan.innerText = '(未滿三位需併桌)';
@@ -225,7 +223,6 @@
                         typeSpan.className = 'table-note';
                         typeSpan.innerText = '七人桌';
                         div.appendChild(typeSpan);
-
                         const shareSpan = document.createElement('span');
                         shareSpan.className = 'table-note';
                         shareSpan.innerText = '(未滿三位需併桌)';
@@ -238,7 +235,6 @@
                         div.appendChild(noteSpan);
                     }
                     
-                    // 設定絕對網格座標，模擬平面圖真實位置
                     if (table.row && table.col) {
                         div.style.gridRow = table.row;
                         div.style.gridColumn = table.col;
@@ -252,12 +248,11 @@
                 }
             } catch (error) {
                 console.error('無法取得資料', error);
-                document.getElementById('last-updated').innerText = '無法連線到伺服器';
+                document.getElementById('last-updated').innerText = '無法連線到數據伺服器';
             }
         }
         
         async function manualRefresh() {
-            // 檢查是否為營業日
             const today = new Date().getDay();
             if (today === 1 || today === 2 || today === 3) {
                 alert('目前為公休日，無法同步座位！');
@@ -267,17 +262,19 @@
             const btn = document.querySelector('.refresh-btn');
             const originalText = btn.innerText;
             btn.disabled = true;
-            btn.innerText = '正在同步中...';
-            document.getElementById('last-updated').innerText = '正在向伺服器發送同步請求...';
+            btn.innerText = '同步中...';
+            document.getElementById('last-updated').innerText = '正在向雲端發送即時同步請求...';
 
             try {
-                // 嘗試直接呼叫後台 refresh API (如果同網域或是開發模式)
-                // 在 GitHub Pages 模式下這通常會失敗，但我們可以嘗試
-                await fetch('http://localhost:3000/api/refresh', { mode: 'no-cors' });
+                // 透過 Firebase 傳遞同步指令給後台
+                await fetch(`${FIREBASE_URL}/refreshRequested.json`, {
+                    method: 'PUT',
+                    body: 'true'
+                });
                 
-                let countdown = 5;
+                let countdown = 8; // 增加到 8 秒，因為要經過 Firebase 轉手
                 const interval = setInterval(() => {
-                    document.getElementById('last-updated').innerText = `已送出請求，${countdown}秒後重新載入數據...`;
+                    document.getElementById('last-updated').innerText = `已送出請求，${countdown}秒後載入雲端數據...`;
                     countdown--;
                     if (countdown < 0) {
                         clearInterval(interval);
@@ -287,17 +284,15 @@
                     }
                 }, 1000);
             } catch (e) {
-                console.log('無法直接呼叫後台，改為等待背景同步...');
-                setTimeout(() => {
-                    fetchSeats();
-                    btn.disabled = false;
-                    btn.innerText = originalText;
-                }, 5000);
+                console.error('發送同步請求失敗', e);
+                fetchSeats();
+                btn.disabled = false;
+                btn.innerText = originalText;
             }
         }
 
         fetchSeats(); 
-        setInterval(fetchSeats, 15000); // 網頁端每 15 秒重新跟我們的伺服器拿一次最新資料
+        setInterval(fetchSeats, 10000); 
     </script>
 </body>
 </html>
