@@ -166,6 +166,9 @@
     </div>
 
     <script>
+        const REPO_API = 'https://api.github.com/repos/malishome/posky-seats/commits/main';
+        const RAW_BASE = 'https://raw.githubusercontent.com/malishome/posky-seats';
+
         async function fetchSeats() {
             try {
                 const today = new Date().getDay();
@@ -183,8 +186,13 @@
                     tablesDiv.style.display = 'grid';
                 }
 
-                // 嘗試讀取本地 JSON (GitHub Pages 同網域)
-                const res = await fetch('./seatData.json?v=' + Date.now());
+                // 🚀 極速同步策略：先抓最新 Commit SHA 繞過所有快取
+                const commitRes = await fetch(REPO_API + '?t=' + Date.now());
+                const commitData = await commitRes.json();
+                const sha = commitData.sha;
+                
+                // 使用 SHA 直接抓取該版本的檔案，GitHub CDN 絕對不會有舊快取
+                const res = await fetch(`${RAW_BASE}/${sha}/seatData.json`);
                 if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
                 const data = await res.json();
                 
@@ -240,16 +248,16 @@
             const btn = document.querySelector('.refresh-btn');
             const originalText = btn.innerText;
             btn.disabled = true;
-            btn.innerText = '正在刷新...';
+            btn.innerText = '正在抓取最新雲端數據...';
             await fetchSeats();
             setTimeout(() => {
                 btn.disabled = false;
                 btn.innerText = originalText;
-            }, 1000);
+            }, 500);
         }
 
         fetchSeats(); 
-        setInterval(fetchSeats, 15000); 
+        setInterval(fetchSeats, 20000); // 20 秒自動刷新視圖，對齊後台
     </script>
 </body>
 </html>
