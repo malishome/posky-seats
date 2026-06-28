@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>malishome seat v3.1</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>malishome seat v3.0</title>
     <style>
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f7; margin: 0; padding: 10px; text-align: center; }
         #error-display { display: none; color: white; background: #ff4444; padding: 8px; margin: 10px; border-radius: 8px; font-weight: bold; font-size: 13px; }
@@ -26,22 +29,20 @@
         .occupied { background-color: #4caf50; }
         .half-occupied { background: linear-gradient(90deg, #9e9e9e 50%, #4caf50 50%); }
         .refresh-btn { margin-top: 20px; padding: 15px 24px; border: none; background: #007bff; color: white; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; max-width: 300px; transition: background 0.3s;}
-        .refresh-btn:active { transform: scale(0.98); }
         .refresh-btn:disabled { background: #99caff; cursor: not-allowed; }
         .ver { position: absolute; top: 5px; right: 10px; font-size: 9px; color: #ddd; }
         #sync-status { font-size: 11px; color: #aaa; margin-top: 5px; }
-        .force-badge { font-size: 10px; background: #ff9800; color: white; padding: 2px 5px; border-radius: 4px; margin-left: 5px; display: none; }
     </style>
 </head>
 <body>
-    <div id="error-display">指令發送中，請稍候...</div>
+    <div id="error-display">連線中...</div>
     <div class="container">
-        <div class="ver">v3.1 (Anti-Cache)</div>
+        <div class="ver">v3.0 (Dynamic)</div>
         <div class="header-section">
             <img src="images/cat-left.jpg" class="deco-img" alt="店貓左">
             <div class="title-wrapper">
                 <h1>店內即時座位</h1>
-                <div id="main-status" class="status-badge available-status">連線中...</div>
+                <div id="main-status" class="status-badge available-status">初始化...</div>
             </div>
             <img src="images/cat-right.jpg" class="deco-img" alt="店貓右">
         </div>
@@ -49,8 +50,8 @@
             <div class="table-grid" id="tables"></div>
         </div>
         <div class="footer-info">
-            <div id="last-updated">最後更新：- <span id="force-label" class="force-badge">瞬時數據</span></div>
-            <div id="sync-status">📡 正在建立通訊通道...</div>
+            <div id="last-updated">最後更新：-</div>
+            <div id="sync-status">雲端同步中...</div>
         </div>
         <button class="refresh-btn" onclick="manualRefresh()">即時同步座位</button>
     </div>
@@ -59,7 +60,7 @@
         const DATA_URL = 'https://raw.githubusercontent.com/malishome/posky-seats/main/seatData.json';
         let currentTriggerUrl = '';
 
-        function updateUI(data, isForce = false) {
+        function updateUI(data) {
             if (!data || !data.details) return;
             document.getElementById('main-status').innerText = data.availableTables > 0 ? `尚有空位 (${data.availableTables} 桌)` : '目前客滿';
             document.getElementById('main-status').className = 'status-badge ' + (data.availableTables > 0 ? 'available-status' : 'full-status');
@@ -74,51 +75,49 @@
                 tablesDiv.appendChild(div);
             });
             document.getElementById('last-updated').innerText = `最後更新：${data.lastUpdated}`;
-            document.getElementById('force-label').style.display = isForce ? 'inline-block' : 'none';
         }
 
         async function fetchConfig() {
             try {
-                // 🚀 極限快取破解
-                const res = await fetch(`${CONFIG_URL}?t=${Date.now()}&r=${Math.random()}`, { cache: 'no-store' });
+                const res = await fetch(`${CONFIG_URL}?t=${Date.now()}`, { cache: 'no-store' });
                 const config = await res.json();
                 currentTriggerUrl = config.url + '/api/refresh';
-                document.getElementById('sync-status').innerText = '✅ 通訊通道已建立 (' + config.updatedAt.split(' ')[1] + ')';
-                document.getElementById('sync-status').style.color = '#2e7d32';
+                document.getElementById('sync-status').innerText = '📡 通訊通道已建立';
             } catch (e) {
-                document.getElementById('sync-status').innerText = '⚠️ 通訊通道受阻 (GitHub 快取中)';
-                document.getElementById('sync-status').style.color = '#ff9800';
+                console.warn("無法取得 API 網址");
+                document.getElementById('sync-status').innerText = '⚠️ 通訊通道受阻 (GitHub 快取)';
             }
         }
 
         async function fetchSeats() {
             try {
-                const res = await fetch(`${DATA_URL}?t=${Date.now()}&r=${Math.random()}`, { cache: 'no-store' });
+                const res = await fetch(`${DATA_URL}?t=${Date.now()}`, { cache: 'no-store' });
                 const data = await res.json();
-                updateUI(data, false);
+                updateUI(data);
                 document.getElementById('error-display').style.display = 'none';
             } catch (error) {
-                console.error("Fetch Error:", error);
+                document.getElementById('error-display').style.display = 'block';
+                document.getElementById('error-display').innerText = '雲端同步延遲中...';
             }
         }
 
         async function manualRefresh() {
             const btn = document.querySelector('.refresh-btn');
             btn.disabled = true;
-            btn.innerText = '🚀 暴力重刷中...';
+            btn.innerText = '📡 指令發射中...';
             
+            // 每次同步前先更新網址
             await fetchConfig();
 
             if (!currentTriggerUrl) {
-                btn.innerText = '❌ 找不到通道，請刷新網頁';
+                btn.innerText = '❌ 找不到通道，請重整網頁';
                 setTimeout(() => { btn.disabled = false; btn.innerText = '即時同步座位'; }, 2000);
                 return;
             }
 
             try {
-                // 🚀 增加 API 回傳時間限制
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 15000);
+                const timeoutId = setTimeout(() => controller.abort(), 8000);
 
                 const res = await fetch(currentTriggerUrl, { 
                     cache: 'no-store',
@@ -129,24 +128,23 @@
                 clearTimeout(timeoutId);
                 
                 if (result.ok && result.data) {
-                    updateUI(result.data, true); 
+                    updateUI(result.data); 
                     btn.innerText = '✅ 瞬時同步成功！';
                 }
             } catch (e) {
-                btn.innerText = '⚠️ 雲端延遲，主機處理中';
+                btn.innerText = '⏳ 指令已送達，等待雲端生效';
                 console.error(e);
             }
 
             setTimeout(() => {
+                fetchSeats();
                 btn.disabled = false;
                 btn.innerText = '即時同步座位';
-                fetchSeats();
-            }, 3000);
+            }, 2000);
         }
 
         fetchConfig().then(fetchSeats);
-        // 每 15 秒主動巡邏一次
-        setInterval(fetchSeats, 15000);
+        setInterval(fetchSeats, 10000);
     </script>
 </body>
 </html>
