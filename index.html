@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <title>malishome seat v3.2</title>
+    <title>malishome seat v3.3</title>
     <style>
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f7; margin: 0; padding: 10px; text-align: center; }
         .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 16px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); position: relative; }
@@ -17,19 +16,20 @@
         .full-status { background-color: #ffebee; color: #c62828; }
         .grid-outer { width: 100%; overflow-x: auto; background: #fafafa; border-radius: 12px; border: 1px solid #eee; margin-top: 15px; }
         .table-grid { display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 75px); gap: 10px; padding: 15px; min-width: 500px; }
-        .table { padding: 5px; border-radius: 8px; font-weight: bold; font-size: 14px; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .table { padding: 5px; border-radius: 8px; font-weight: bold; font-size: 14px; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .available { background-color: #9e9e9e; }
         .occupied { background-color: #4caf50; }
         .half-occupied { background: linear-gradient(90deg, #9e9e9e 50%, #4caf50 50%); }
-        .refresh-btn { margin-top: 20px; padding: 15px 24px; border: none; background: #007bff; color: white; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; max-width: 300px; }
-        .refresh-btn:disabled { background: #99caff; }
+        .refresh-btn { margin-top: 20px; padding: 15px 24px; border: none; background: #007bff; color: white; border-radius: 12px; cursor: pointer; font-size: 18px; font-weight: bold; width: 100%; max-width: 350px; box-shadow: 0 4px 0 #0056b3; }
+        .refresh-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #0056b3; }
+        .refresh-btn:disabled { background: #99caff; box-shadow: 0 4px 0 #66b0ff; cursor: wait; }
         .ver { position: absolute; top: 5px; right: 10px; font-size: 10px; color: #ff0000; font-weight: bold; }
-        .clock { font-size: 11px; color: #aaa; margin-top: 10px; }
+        .footer-text { font-size: 11px; color: #aaa; margin-top: 10px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="ver">v3.2 - 暴力重刷版</div>
+        <div class="ver">v3.3 - 瞬時回傳版</div>
         <div class="header-section">
             <img src="images/cat-left.jpg" class="deco-img" alt="店貓左">
             <div class="title-wrapper">
@@ -41,18 +41,11 @@
         <div class="grid-outer">
             <div class="table-grid" id="tables"></div>
         </div>
-        <div class="clock" id="last-updated">最後更新：(等待首次同步)</div>
-        <div class="clock" id="current-time">網頁時間：--:--:--</div>
-        <button class="refresh-btn" onclick="manualRefresh()">即時同步座位</button>
+        <div class="footer-text" id="last-updated">最後更新：(載入中)</div>
+        <div class="footer-text" id="api-status">📡 正在尋找主機通道...</div>
+        <button class="refresh-btn" onclick="manualRefresh()">即時同步座位 (秒級更新)</button>
     </div>
     <script>
-        // 🚀 強制清除 Service Worker (避免快取)
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                for(let registration of registrations) { registration.unregister(); }
-            });
-        }
-
         const CONFIG_URL = 'https://raw.githubusercontent.com/malishome/posky-seats/main/tunnel.json';
         const DATA_URL = 'https://raw.githubusercontent.com/malishome/posky-seats/main/seatData.json';
         let apiEndpoint = '';
@@ -79,7 +72,10 @@
                 const res = await fetch(`${CONFIG_URL}?r=${Math.random()}`, { cache: 'no-store' });
                 const config = await res.json();
                 apiEndpoint = config.url + '/api/refresh';
-            } catch (e) {}
+                document.getElementById('api-status').innerText = '✅ 主機通道已對準 (' + config.updatedAt.split(' ')[1] + ')';
+            } catch (e) {
+                document.getElementById('api-status').innerText = '⚠️ 通道受阻，正嘗試繞過快取...';
+            }
         }
 
         async function fetchSeats() {
@@ -93,40 +89,47 @@
         async function manualRefresh() {
             const btn = document.querySelector('.refresh-btn');
             btn.disabled = true;
-            btn.innerText = '正在暴力重刷...';
+            btn.innerText = '🚀 正在連線主機...';
             
             await syncConfig();
             
             if (apiEndpoint) {
                 try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 15000); 
+
                     const res = await fetch(apiEndpoint, { 
                         headers: { 'Bypass-Tunnel-Reminder': 'true' },
-                        cache: 'no-store'
+                        cache: 'no-store',
+                        signal: controller.signal
                     });
                     const result = await res.json();
+                    clearTimeout(timeoutId);
+
                     if (result.ok && result.data) {
                         updateUI(result.data);
                         btn.innerText = '✅ 瞬時同步成功！';
+                        setTimeout(() => { btn.disabled = false; btn.innerText = '即時同步座位 (秒級更新)'; }, 1000);
+                        return;
                     }
                 } catch (e) {
-                    btn.innerText = '⚠️ API 逾時，等待雲端';
+                    console.error("API Error:", e);
+                    btn.innerText = '⏳ 處理中，請等待 5 秒...';
                 }
+            } else {
+                btn.innerText = '❌ 通道未建立，請稍候';
             }
 
             setTimeout(() => {
                 btn.disabled = false;
-                btn.innerText = '即時同步座位';
+                btn.innerText = '即時同步座位 (秒級更新)';
                 fetchSeats();
-            }, 3000);
+            }, 5000);
         }
 
-        setInterval(() => {
-            const now = new Date();
-            document.getElementById('current-time').innerText = `網頁時間：${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-        }, 1000);
-
         syncConfig().then(fetchSeats);
-        setInterval(fetchSeats, 15000);
+        setInterval(fetchSeats, 20000);
+        setInterval(syncConfig, 60000);
     </script>
 </body>
 </html>
