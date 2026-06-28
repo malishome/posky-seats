@@ -1,1 +1,60 @@
-{"lastUpdated": "(即時) 20:25:00", "availableTables": 8, "details": [{"name":"大方桌","status":"available","row":1,"col":3},{"name":"馬栗圓桌","status":"available","row":2,"col":1},{"name":"小圓","status":"available","row":2,"col":2},{"name":"矮窗","status":"available","row":2,"col":4},{"name":"石桌","status":"available","row":2,"col":5},{"name":"大藤桌","status":"available","row":3,"col":1},{"name":"吧一","status":"occupied","row":3,"col":4},{"name":"吧二","status":"available","row":3,"col":5},{"name":"小矮藤桌","status":"available","row":2,"col":3}]}
+{
+  "lastUpdated": "(自動更新) 20:32:46",
+  "availableTables": 8,
+  "details": [
+    {
+      "name": "大籐桌",
+      "status": "available",
+      "row": 3,
+      "col": 1
+    },
+    {
+      "name": "馬栗圓桌",
+      "status": "available",
+      "row": 2,
+      "col": 1
+    },
+    {
+      "name": "小圓",
+      "status": "available",
+      "row": 2,
+      "col": 2
+    },
+    {
+      "name": "大方桌",
+      "status": "available",
+      "row": 1,
+      "col": 3
+    },
+    {
+      "name": "吧一",
+      "status": "occupied",
+      "row": 3,
+      "col": 4
+    },
+    {
+      "name": "吧二",
+      "status": "available",
+      "row": 3,
+      "col": 5
+    },
+    {
+      "name": "矮窗",
+      "status": "available",
+      "row": 2,
+      "col": 4
+    },
+    {
+      "name": "石桌",
+      "status": "available",
+      "row": 2,
+      "col": 5
+    },
+    {
+      "name": "小矮藤桌",
+      "status": "available",
+      "row": 2,
+      "col": 3
+    }
+  ]
+}
