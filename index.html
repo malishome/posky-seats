@@ -168,6 +168,7 @@
     <script>
         const REPO_API = 'https://api.github.com/repos/malishome/posky-seats/commits/main';
         const RAW_BASE = 'https://raw.githubusercontent.com/malishome/posky-seats';
+        const TRIGGER_URL = 'https://malishome-posky.loca.lt/api/refresh';
 
         async function fetchSeats() {
             const mainStatus = document.getElementById('main-status');
@@ -175,7 +176,7 @@
             const errorDiv = document.getElementById('error-display');
             
             try {
-                // 🚀 極速快取穿透：使用 Commit SHA 抓取檔案
+                // 🚀 快取穿透：使用 Commit SHA
                 const commitRes = await fetch(REPO_API + '?t=' + Date.now());
                 const commitData = await commitRes.json();
                 const sha = commitData.sha;
@@ -210,22 +211,36 @@
         async function manualRefresh() {
             const btn = document.querySelector('.refresh-btn');
             btn.disabled = true;
-            btn.innerText = '📡 正在穿透快取並同步...';
+            btn.innerText = '📡 正在喚醒主機並同步...';
             
-            // 🚀 連續抓取兩次，確保第一次如果卡住第二次一定能拿到最新的
             try {
-                await fetchSeats();
-                await new Promise(r => setTimeout(r, 500));
-                await fetchSeats();
-                btn.innerText = '✅ 同步成功！';
+                // 🚀 1. 觸發後台立即抓取
+                await fetch(TRIGGER_URL, { 
+                    headers: { 'Bypass-Tunnel-Reminder': 'true' }
+                });
+                
+                // 🚀 2. 倒數 3 秒等 Git 推播完成，然後連抓兩次
+                let count = 3;
+                const timer = setInterval(async () => {
+                    btn.innerText = `⏳ 等待同步中 (${count}s)...`;
+                    count--;
+                    if (count < 0) {
+                        clearInterval(timer);
+                        await fetchSeats();
+                        btn.innerText = '✅ 同步成功！';
+                        setTimeout(() => {
+                            btn.disabled = false;
+                            btn.innerText = '即時同步座位';
+                        }, 2000);
+                    }
+                }, 1000);
+
             } catch (e) {
-                btn.innerText = '❌ 同步失敗，請重試';
-            }
-            
-            setTimeout(() => {
+                console.error(e);
+                await fetchSeats();
                 btn.disabled = false;
                 btn.innerText = '即時同步座位';
-            }, 2000);
+            }
         }
 
         fetchSeats(); 
