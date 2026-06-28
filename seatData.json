@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "(物理現況) 20:53:21",
+  "lastUpdated": "(物理現況) 20:55:23",
   "availableTables": 9,
   "details": [
     {
@@ -56,6 +56,5 @@
       "row": 2,
       "col": 3
     }
-  ],
-  "source": "daemon"
+  ]
 }
