@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>店內即時座位狀態 v5.6</title>
+    <title>店內即時座位狀態 v5.7</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f2f2f7; margin: 0; padding: 10px; text-align: center; }
         .container { max-width: 850px; margin: 0 auto; background: white; border-radius: 20px; padding: 20px 15px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); position: relative; }
@@ -102,13 +102,11 @@
         async function refresh() {
             const cacheBuster = `?t=${Date.now()}`;
             
-            // 1. 取得 Tunnel URL
             try {
                 const res = await fetch(CONFIG_URL + cacheBuster, { cache: 'no-store' });
                 const config = await res.json();
                 apiBase = config.url;
-                const timeText = config.updatedAt ? (config.updatedAt.includes(' ') ? config.updatedAt.split(' ')[1] : config.updatedAt) : '已更新';
-                document.getElementById('sync-status').innerText = '✅ 主機數據直連中 (' + timeText + ')';
+                document.getElementById('sync-status').innerText = '✅ 主機數據直連中';
                 document.getElementById('sync-status').style.color = '#007aff';
             } catch (e) {
                 document.getElementById('sync-status').innerText = '⚠️ 正在使用雲端備份模式';
@@ -116,11 +114,10 @@
             }
             
             let success = false;
-            // 2. 優先嘗試直連 API
             if (apiBase) {
                 try {
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒超時
+                    const timeoutId = setTimeout(() => controller.abort(), 5000);
                     
                     const res = await fetch(`${apiBase}/api/seats${cacheBuster}`, { 
                         headers: { 'Bypass-Tunnel-Reminder': 'true' },
@@ -133,21 +130,15 @@
                         success = true;
                     }
                     clearTimeout(timeoutId);
-                } catch (e) {
-                    console.log("Local API failed, falling back...");
-                }
+                } catch (e) {}
             }
 
-            // 3. 備份：從 GitHub 抓 JSON
             if (!success) {
                 try {
                     const res = await fetch(GITHUB_DATA_URL + cacheBuster, { cache: 'no-store' });
                     const data = await res.json();
                     render(data);
-                } catch (err) {
-                    console.error("All data sources failed.");
-                    document.getElementById('update-time').innerText = '❌ 同步失敗，請檢查網路';
-                }
+                } catch (err) {}
             }
         }
 
