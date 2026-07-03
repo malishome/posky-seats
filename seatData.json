@@ -1,6 +1,6 @@
 {
-  "lastUpdated": "(即時) 13:47:06",
-  "availableTables": 7,
+  "lastUpdated": "(即時) 13:47:24",
+  "availableTables": 6,
   "details": [
     {
       "name": "大籐桌",
@@ -16,7 +16,7 @@
     },
     {
       "name": "小圓",
-      "status": "available",
+      "status": "occupied",
       "row": 2,
       "col": 2
     },
