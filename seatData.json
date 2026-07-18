@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "(即時) 15:48:51",
+  "lastUpdated": "(即時) 15:49:09",
   "availableTables": 1,
   "details": [
     {
@@ -28,13 +28,13 @@
     },
     {
       "name": "吧一",
-      "status": "occupied",
+      "status": "available",
       "row": 3,
       "col": 4
     },
     {
       "name": "吧二",
-      "status": "available",
+      "status": "occupied",
       "row": 3,
       "col": 5
     },
