@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "(即時) 16:48:57",
+  "lastUpdated": "(即時) 16:49:19",
   "availableTables": 4,
   "details": [
     {
@@ -22,7 +22,7 @@
     },
     {
       "name": "大方桌",
-      "status": "half-occupied",
+      "status": "available",
       "row": 1,
       "col": 3
     },
