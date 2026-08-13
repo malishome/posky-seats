@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "(即時) 16:28:36",
+  "lastUpdated": "(即時) 16:28:55",
   "availableTables": 6,
   "details": [
     {
@@ -10,7 +10,7 @@
     },
     {
       "name": "馬栗圓桌",
-      "status": "available",
+      "status": "occupied",
       "row": 2,
       "col": 1
     },
@@ -46,7 +46,7 @@
     },
     {
       "name": "石桌",
-      "status": "occupied",
+      "status": "available",
       "row": 2,
       "col": 5
     },
